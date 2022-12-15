@@ -1,0 +1,17 @@
+{
+    debug
+}
+
+:8443 {
+    tls /certs/test.crt /certs/test.key
+    handle /greeting-service/* {
+        reverse_proxy https://greeting-service:8443 {
+            header_up Host                   {upstream_hostport}
+            transport http {
+                tls_insecure_skip_verify
+                tls_server_name              chunkbox
+                tls_trusted_ca_certs         /certs/trust.pem
+            }
+        }
+    }
+}
