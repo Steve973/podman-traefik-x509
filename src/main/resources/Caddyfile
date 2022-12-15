@@ -1,16 +1,19 @@
 {
     debug
+    auto_https off
+    ocsp_stapling off
 }
 
 :8443 {
     tls /certs/test.crt /certs/test.key
     handle /greeting-service/* {
         reverse_proxy https://greeting-service:8443 {
-            header_up Host                   {upstream_hostport}
+            header_up Host                   {env.OUTER_HOST}
             transport http {
                 tls_insecure_skip_verify
-                tls_server_name              chunkbox
+                tls_server_name              {env.OUTER_HOST}
                 tls_trusted_ca_certs         /certs/trust.pem
+                tls_client_auth              /certs/test.crt /certs/test.key
             }
         }
     }

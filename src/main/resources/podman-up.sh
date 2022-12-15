@@ -1,9 +1,9 @@
 #!/bin/bash
-
+HOST=$(hostname)
+rm -rf ./certs > /dev/null 2>&1
 mkdir ./certs
 pushd ./certs
 
-rm test.ext
 cat > test.ext <<EOF
 authorityKeyIdentifier=keyid,issuer
 basicConstraints=CA:FALSE
@@ -11,7 +11,7 @@ keyUsage=digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
 subjectAltName=@alt_names
 
 [alt_names]
-DNS.1=test
+DNS.1=${HOST}
 DNS.2=localhost
 EOF
 
@@ -22,9 +22,8 @@ openssl req -x509 -new -nodes -key ./myCA.key -sha384 -days 999 -out ./myCA.pem 
 openssl req -newkey rsa:4096 -nodes -sha384 -keyout ./test.key -out ./test.csr -subj "/C=XX/ST=Confusion/L=Somewhere/O=example/CN=$(hostname)"
 openssl x509 -req -in ./test.csr -CA ./myCA.pem -CAkey ./myCA.key -CAcreateserial -out ./test.crt -days 999 -sha384 -extfile ./test.ext
 openssl x509 -signkey ./test.key -in ./test.csr -req -days 999 -out ./test.crt
-openssl pkcs12 -export -out test.p12 -name "localhost" -inkey test.key -in test.crt -passout pass:test -passin pass:
-#openssl pkcs12 -export -nokeys -in myCA.pem -out myCA.p12 -passout pass:test -passin pass:
-keytool -import -trustcacerts -noprompt -alias ca -ext san=dns:localhost,ip:127.0.0.1 -file ./myCA.pem -keystore ./truststore.jks -storepass changeit
+openssl pkcs12 -export -out test.p12 -name "$(hostname)" -inkey test.key -in test.crt -passout pass:test -passin pass:
+keytool -import -trustcacerts -noprompt -alias "$(hostname)" -ext san=dns:localhost,ip:127.0.0.1 -file ./myCA.pem -keystore ./truststore.jks -storepass changeit
 popd
 
 podman secret create --driver=file test-p12 ./certs/test.p12
@@ -49,6 +48,7 @@ podman run -d \
  --pod greeting-service \
  --secret source=test-p12,target=/certs/test.p12,type=mount \
  --secret source=trust-jks,target=/certs/trust.jks,type=mount \
+ --env "OUTER_HOST=$(hostname)" \
  docker.io/library/greeting-service
 
 podman run -d \
@@ -58,4 +58,5 @@ podman run -d \
  --secret source=test-key,target=/certs/test.key,type=mount \
  --secret source=trust-pem,target=/certs/trust.pem,type=mount \
  --volume ./Caddyfile:/etc/caddy/Caddyfile \
+ --env "OUTER_HOST=$(hostname)" \
  docker.io/library/caddy:2.6.2-alpine
