@@ -15,12 +15,7 @@ public class RestServiceApplication {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.authorizeRequests()
-                .anyRequest()
-                .authenticated()
-                .and()
-                .x509()
-                .subjectPrincipalRegex("CN=(.*?)(?:,|$)");
+        http.x509();
         return http.build();
     }
 
