@@ -5,13 +5,17 @@
 }
 
 :8443 {
-    tls /certs/test.crt /certs/test.key
+    tls /certs/test.crt /certs/test.key {
+        client_auth {
+            mode                   require_and_verify
+            trusted_ca_cert_file   /certs/trust.pem
+        }
+    }
     handle /greeting-service/* {
         reverse_proxy https://greeting-service:8443 {
-            header_up Host                   {env.OUTER_HOST}
+            header_up Host                   {$OUTER_HOST}
             transport http {
-                tls_insecure_skip_verify
-                tls_server_name              {env.OUTER_HOST}
+                tls_server_name              {$OUTER_HOST}
                 tls_trusted_ca_certs         /certs/trust.pem
                 tls_client_auth              /certs/test.crt /certs/test.key
             }

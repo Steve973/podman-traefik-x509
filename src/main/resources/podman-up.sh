@@ -21,7 +21,6 @@ openssl genrsa -out ./myCA.key 2048
 openssl req -x509 -new -nodes -key ./myCA.key -sha384 -days 999 -out ./myCA.pem -subj "/C=XX/ST=Confusion/L=Somewhere/O=example/CN=CertificateAuthority"
 openssl req -newkey rsa:4096 -nodes -sha384 -keyout ./test.key -out ./test.csr -subj "/C=XX/ST=Confusion/L=Somewhere/O=example/CN=$(hostname)"
 openssl x509 -req -in ./test.csr -CA ./myCA.pem -CAkey ./myCA.key -CAcreateserial -out ./test.crt -days 999 -sha384 -extfile ./test.ext
-openssl x509 -signkey ./test.key -in ./test.csr -req -days 999 -out ./test.crt
 openssl pkcs12 -export -out test.p12 -name "$(hostname)" -inkey test.key -in test.crt -passout pass:test -passin pass:
 keytool -import -trustcacerts -noprompt -alias "$(hostname)" -ext san=dns:localhost,ip:127.0.0.1 -file ./myCA.pem -keystore ./truststore.jks -storepass changeit
 popd
