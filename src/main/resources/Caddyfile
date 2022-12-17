@@ -4,12 +4,16 @@
     ocsp_stapling off
 }
 
+# Snippet to include in matchers that need these proxy headers
+# and not have to repeat this info every time
 (proxy_headers) {
     header_up Host                   {$OUTER_HOST}
     header_up X-ProxiedEntitiesChain {xpechain}
     header_up X-ProxiedIssuersChain  {xpichain}
 }
 
+# Snippet to configure tls parameters for importing so that
+# the info does not have to be repeated every time
 (proxy_http) {
     transport http {
         tls_server_name              {$OUTER_HOST}
@@ -31,6 +35,8 @@
     root /* /var/www
     file_server
 
+    # Named matcher for websockets, but I do not know if
+    # I will need to use this, or not
 	@websockets {
 		header Connection *Upgrade*
 		header Upgrade    websocket
