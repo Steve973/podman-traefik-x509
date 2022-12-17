@@ -42,6 +42,11 @@ podman pod create \
  --name greeting-service \
  --network services_network
 
+podman pod create \
+ --name portainer \
+ --network services_network \
+ --publish 9443:9443
+
 podman run -d \
  --name greeting_service \
  --pod greeting-service \
@@ -49,6 +54,14 @@ podman run -d \
  --secret source=trust-jks,target=/certs/trust.jks,type=mount \
  --env "OUTER_HOST=$(hostname)" \
  docker.io/library/greeting-service
+
+podman run -d \
+ --name portainer_ce \
+ --pod portainer \
+ --secret source=test-p12,target=/certs/test.p12,type=mount \
+ --secret source=trust-jks,target=/certs/trust.jks,type=mount \
+ --volume /run/user/1000/podman/podman.sock:/var/run/docker.sock:Z \
+ docker.io/portainer/portainer-ce
 
 podman run -d \
  --name caddy \
