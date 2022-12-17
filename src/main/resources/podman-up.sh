@@ -57,5 +57,6 @@ podman run -d \
  --secret source=test-key,target=/certs/test.key,type=mount \
  --secret source=trust-pem,target=/certs/trust.pem,type=mount \
  --volume ./Caddyfile:/etc/caddy/Caddyfile \
+ --volume ./errors:/var/www/errors \
  --env "OUTER_HOST=$(hostname)" \
  docker.io/library/caddy:2.6.2-alpine

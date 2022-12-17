@@ -9,6 +9,7 @@
     header_up X-ProxiedEntitiesChain {xpechain}
     header_up X-ProxiedIssuersChain  {xpichain}
 }
+
 (proxy_http) {
     transport http {
         tls_server_name              {$OUTER_HOST}
@@ -24,18 +25,40 @@
             trusted_ca_cert_file   /certs/trust.pem
         }
     }
+
+    # set this for the path to static error page content
+    # look at what the nginx config is setting for this
+    root /* /var/www
+    file_server
+
+	@websockets {
+		header Connection *Upgrade*
+		header Upgrade    websocket
+	}
+
     map {header.X-ProxiedEntitiesChain} {xpechain} {
         ~^(.+)$ {header.X-ProxiedEntitiesChain}<{tls_client_subject}>
         default <{tls_client_subject}>
     }
+
     map {header.X-ProxiedIssuersChain} {xpichain} {
         ~^(.+)$ {header.X-ProxiedIssuersChain}<{tls_client_issuer}>
         default <{tls_client_issuer}>
     }
+
     handle /greeting-service/* {
         reverse_proxy https://greeting-service:8443 {
             import proxy_headers
             import proxy_http
         }
+    }
+
+    handle_errors {
+        @custom_err file /errors/err-{err.status_code}.html /errors/err.html
+        handle @custom_err {
+            rewrite * {file_match.relative}
+            file_server
+        }
+        respond "{err.status_code} {err.status_text}"
     }
 }
