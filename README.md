@@ -17,3 +17,10 @@ curl \
  "https://localhost:8443/greeting-service/greeting?name=World"
 ```
 Portainer is available at `https://localhost:9443`
+
+You can bring all pods down, remove the network, and remove the secrets by running:
+```
+sh ./podman-down.sh
+```
+If you want the certs to be re-generated, then remove the certs directory prior to running the
+`podman-up.sh` script.
