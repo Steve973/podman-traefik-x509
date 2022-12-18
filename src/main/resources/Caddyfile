@@ -30,18 +30,6 @@
         }
     }
 
-    # set this for the path to static error page content
-    # look at what the nginx config is setting for this
-    root /* /var/www
-    file_server
-
-    # Named matcher for websockets, but I do not know if
-    # I will need to use this, or not
-	@websockets {
-		header Connection *Upgrade*
-		header Upgrade    websocket
-	}
-
     map {header.X-ProxiedEntitiesChain} {xpechain} {
         ~^(.+)$ {header.X-ProxiedEntitiesChain}<{tls_client_subject}>
         default <{tls_client_subject}>
@@ -57,6 +45,13 @@
             import proxy_headers
             import proxy_http
         }
+    }
+
+    handle {
+        # set this for the path to static error page content
+        # look at what the nginx config is setting for this
+        root * /var/www
+        file_server
     }
 
     handle_errors {
