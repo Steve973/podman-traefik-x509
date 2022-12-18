@@ -55,6 +55,7 @@
     }
 
     handle_errors {
+        root * /var/www
         @custom_err file /errors/err-{err.status_code}.html /errors/err.html
         handle @custom_err {
             rewrite * {file_match.relative}
