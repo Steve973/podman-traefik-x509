@@ -4,24 +4,6 @@
     ocsp_stapling off
 }
 
-# Snippet to include in matchers that need these proxy headers
-# and not have to repeat this info every time
-(proxy_headers) {
-    header_up Host                   {$OUTER_HOST}
-    header_up X-ProxiedEntitiesChain {xpechain}
-    header_up X-ProxiedIssuersChain  {xpichain}
-}
-
-# Snippet to configure tls parameters for importing so that
-# the info does not have to be repeated every time
-(proxy_http) {
-    transport http {
-        tls_server_name              {$OUTER_HOST}
-        tls_trusted_ca_certs         /certs/trust.pem
-        tls_client_auth              /certs/test.crt /certs/test.key
-    }
-}
-
 :8443 {
     tls /certs/test.crt /certs/test.key {
         client_auth {
@@ -30,21 +12,8 @@
         }
     }
 
-    map {header.X-ProxiedEntitiesChain} {xpechain} {
-        ~^(.+)$ {header.X-ProxiedEntitiesChain}<{tls_client_subject}>
-        default <{tls_client_subject}>
-    }
-
-    map {header.X-ProxiedIssuersChain} {xpichain} {
-        ~^(.+)$ {header.X-ProxiedIssuersChain}<{tls_client_issuer}>
-        default <{tls_client_issuer}>
-    }
-
     handle /greeting-service/* {
-        reverse_proxy https://greeting-service:8443 {
-            import proxy_headers
-            import proxy_http
-        }
+        reverse_proxy http://greeting-service:8080
     }
 
     handle {

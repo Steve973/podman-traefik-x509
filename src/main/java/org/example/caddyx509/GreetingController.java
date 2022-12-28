@@ -10,12 +10,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class GreetingController {
 
-	private static final String template = "Hello, %s! xpe: %s";
+	private static final String template = "Hello, %s! forwarded cert info: %s";
 	private final AtomicLong counter = new AtomicLong();
 
 	@GetMapping("/greeting")
 	public Greeting greeting(@RequestParam(value = "name", defaultValue = "World") String name,
-							 @RequestHeader("X-ProxiedEntitiesChain") String xpechain) {
-		return new Greeting(counter.incrementAndGet(), String.format(template, name, xpechain));
+							 @RequestHeader("X-Forwarded-Tls-Client-Cert-Info") String certInfo) {
+		return new Greeting(counter.incrementAndGet(), String.format(template, name, certInfo));
 	}
 }

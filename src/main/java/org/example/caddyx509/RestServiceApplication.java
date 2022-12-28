@@ -15,7 +15,6 @@ public class RestServiceApplication {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.x509();
         return http.build();
     }
 
