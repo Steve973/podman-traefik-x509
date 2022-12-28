@@ -38,7 +38,6 @@ http:
             domainComponent: true
             locality: true
             organization: true
-            organizationalUnit: true
             province: true
   services:
     greeting-service:
