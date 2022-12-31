@@ -1,3 +1,5 @@
 .idea
 deployment/certs
+deployment/arangodb
+deployment/elasticsearch
 target
