@@ -59,7 +59,7 @@ podman run -d \
  --env ARANGO_ROOT_PASSWORD=${ARANGO_ROOT_PASSWORD} \
  --label "stackId=data" \
  --label "traefik.enable=true" \
- --label "traefik.http.routers.arangodb-router.entrypoints=arango-tcp" \
+ --label "traefik.http.routers.arangodb-router.entrypoints=arango-http" \
  --label "traefik.http.routers.arangodb-router.rule=Host(\`localhost\`)" \
  --label "traefik.http.routers.arangodb-router.service=arangodb" \
  --label "traefik.http.routers.arangodb-router.tls=true" \
@@ -76,7 +76,7 @@ podman run -d \
  --env xpack.security.enabled=true \
  --label "stackId=data" \
  --label "traefik.enable=true" \
- --label "traefik.http.routers.elasticsearch-router.entrypoints=elasticsearch-tcp" \
+ --label "traefik.http.routers.elasticsearch-router.entrypoints=elasticsearch-http" \
  --label "traefik.http.routers.elasticsearch-router.rule=Host(\`localhost\`)" \
  --label "traefik.http.routers.elasticsearch-router.service=elasticsearch" \
  --label "traefik.http.routers.elasticsearch-router.tls=true" \
@@ -93,7 +93,7 @@ podman run -d \
  --env ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD} \
  --label "stackId=data" \
  --label "traefik.enable=true" \
- --label "traefik.http.routers.kibana-router.entrypoints=kibana-tcp" \
+ --label "traefik.http.routers.kibana-router.entrypoints=kibana-http" \
  --label "traefik.http.routers.kibana-router.rule=Host(\`localhost\`)" \
  --label "traefik.http.routers.kibana-router.service=kibana" \
  --label "traefik.http.routers.kibana-router.tls=true" \
@@ -106,7 +106,7 @@ podman run -d \
  --pod grafana \
  --label "stackId=data" \
  --label "traefik.enable=true" \
- --label "traefik.http.routers.grafana-router.entrypoints=grafana-tcp" \
+ --label "traefik.http.routers.grafana-router.entrypoints=grafana-http" \
  --label "traefik.http.routers.grafana-router.rule=Host(\`localhost\`)" \
  --label "traefik.http.routers.grafana-router.service=grafana" \
  --label "traefik.http.routers.grafana-router.tls=true" \
@@ -139,10 +139,10 @@ podman run -d \
   --api=true \
   --api.dashboard=true \
   --entrypoints.websecure.address=:8444 \
-  --entrypoints.arango-tcp.address=:${ARANGO_PORT} \
-  --entrypoints.elasticsearch-tcp.address=:${ELASTIC_PORT} \
-  --entrypoints.kibana-tcp.address=:${KIBANA_PORT} \
-  --entrypoints.grafana-tcp.address=:${GRAFANA_PORT} \
+  --entrypoints.arango-http.address=:${ARANGO_PORT} \
+  --entrypoints.elasticsearch-http.address=:${ELASTIC_PORT} \
+  --entrypoints.kibana-http.address=:${KIBANA_PORT} \
+  --entrypoints.grafana-http.address=:${GRAFANA_PORT} \
   --providers.docker=true \
   --providers.docker.exposedbydefault=false \
   --providers.docker.network=data_network \
