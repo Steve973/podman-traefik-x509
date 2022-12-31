@@ -1,15 +1,9 @@
-providers:
-  file:
-    directory: "/etc/traefik"
-
-entryPoints:
-  websecure:
-    address: ":8443"
-
 tls:
-  certificates:
-    - certFile: /certs/test.crt
-    - keyFile: /certs/test.key
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /certs/test.crt
+        keyFile: /certs/test.key
   options:
     default:
       minVersion: VersionTLS12
@@ -22,7 +16,7 @@ http:
   middlewares:
     pass-tls-client-cert:
       passTLSClientCert:
-        pem: true
+        pem: false
         info:
           subject:
             commonName: true
@@ -39,16 +33,3 @@ http:
             locality: true
             organization: true
             province: true
-  services:
-    greeting-service:
-      loadBalancer:
-        servers:
-          - url: "http://greeting-service:8080"
-  routers:
-    greeting-service-router:
-      rule: "PathPrefix(`/greeting-service`)"
-      middlewares:
-        - pass-tls-client-cert
-      service: greeting-service
-      tls:
-        options: default

@@ -1,3 +1,3 @@
 .idea
+deployment/certs
 target
-src/main/resources/certs
