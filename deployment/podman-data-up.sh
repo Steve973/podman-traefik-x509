@@ -11,6 +11,7 @@ podman secret create --driver=file trust-pem ./certs/myCA.pem
 podman network create data_network
 
 ##### source ./.env
+MONGO_PORT=27017
 ARANGO_ROOT_PASSWORD=test123
 ARANGO_PORT=8529
 ELASTIC_PASSWORD=test123
@@ -18,6 +19,12 @@ ELASTIC_PORT=9200
 KIBANA_PASSWORD=test123
 KIBANA_PORT=5601
 GRAFANA_PORT=3000
+
+podman pod create \
+ --name mongodb \
+ --infra-name mongodb-infra \
+ --userns keep-id \
+ --network data_network
 
 podman pod create \
  --name arangodb \
@@ -46,10 +53,30 @@ podman pod create \
  --infra-name data-proxy-infra \
  --network data_network \
  --publish 8444:8444 \
+ --publish ${MONGO_PORT}:${MONGO_PORT} \
  --publish ${ARANGO_PORT}:${ARANGO_PORT} \
  --publish ${ELASTIC_PORT}:${ELASTIC_PORT} \
  --publish ${KIBANA_PORT}:${KIBANA_PORT} \
  --publish ${GRAFANA_PORT}:${GRAFANA_PORT}
+
+podman run -d \
+ --name data_mongodb \
+ --pod mongodb \
+ --volume ./mongodb/db:/data/db:z \
+ --label "stackId=data" \
+ --label "traefik.enable=true" \
+ --label "traefik.tcp.routers.mongodb-router.entrypoints=mongo-tcp" \
+ --label "traefik.tcp.routers.mongodb-router.rule=HostSNI(\`localhost\`)" \
+ --label "traefik.tcp.routers.mongodb-router.service=mongodb" \
+ --label "traefik.tcp.routers.mongodb-router.tls=true" \
+ --label "traefik.tcp.routers.mongodb-router.tls.options=default" \
+ --label "traefik.tcp.services.mongodb.loadbalancer.server.port=${MONGO_PORT}" \
+ docker.io/mongo:6.0.3 \
+  --quiet \
+  --bind_ip_all \
+  --auth \
+  --enableFreeMonitoring off \
+  --journal
 
 podman run -d \
  --name data_arangodb \
@@ -139,6 +166,7 @@ podman run -d \
   --api=true \
   --api.dashboard=true \
   --entrypoints.websecure.address=:8444 \
+  --entrypoints.mongo-tcp.address=:${MONGO_PORT} \
   --entrypoints.arango-http.address=:${ARANGO_PORT} \
   --entrypoints.elasticsearch-http.address=:${ELASTIC_PORT} \
   --entrypoints.kibana-http.address=:${KIBANA_PORT} \

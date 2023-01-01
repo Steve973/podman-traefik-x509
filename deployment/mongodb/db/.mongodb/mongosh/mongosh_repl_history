@@ -1,0 +1,9 @@
+exit
+db.auth
+db.getUser('root')
+db.getUser({'root'})
+db.getUser()
+db.getUser(root)
+db.getUsers
+use admin
+who
