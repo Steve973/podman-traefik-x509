@@ -1,0 +1,62 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    image:
+      name: traefik
+      tag: v2.9
+    deployment:
+      additionalVolumes:
+        - name: traefik-dynamic-configs
+          hostPath:
+            path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/traefik/data/config
+    additionalVolumeMounts:
+      - name: traefik-dynamic-configs
+        mountPath: /etc/traefik/dynamic
+    globalArguments:
+      - "--global.checknewversion=false"
+      - "--global.sendanonymoususage=false"
+    additionalArguments:
+      - "--providers.kubernetesingress=true"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+    logs:
+      general:
+        format: json
+        level: WARN
+      access:
+        enabled: true
+        format: json
+    ports:
+      websecure:
+        port: 8443
+        expose: true
+        exposedPort: 8443
+        protocol: TCP
+      mongodb-tcp
+        port: 27017
+        expose: true
+        exposedPort: 27017
+        protocol: TCP
+      arango-http
+        port: 8529
+        expose: true
+        exposedPort: 8529
+        protocol: TCP
+      elastic-http
+        port: 9200
+        expose: true
+        exposedPort: 9200
+        protocol: TCP
+      kibana-http
+        port: 5601
+        expose: true
+        exposedPort: 5601
+        protocol: TCP
+      grafana-http
+        port: 3000
+        expose: true
+        exposedPort: 3000
+        protocol: TCP
