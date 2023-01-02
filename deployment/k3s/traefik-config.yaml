@@ -8,12 +8,44 @@ spec:
     image:
       name: traefik
       tag: v2.9
+    dashboard:
+      enabled: true
     deployment:
       additionalVolumes:
         - name: traefik-dynamic-configs
           hostPath:
             path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/traefik/data/config
+            type: Directory
+        - name: certs-dir
+          hostPath:
+            path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/certs
+            type: Directory
+        - name: test-cert
+          hostPath:
+            path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/certs/test.crt
+            type: File
+        - name: test-key
+          hostPath:
+            path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/certs/test.key
+            type: File
+        - name: trust-pem
+          hostPath:
+            path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/certs/myCA.pem
+            type: File
+      initContainers:
+        - name: volume-permissions
+          image: busybox:1.35
+          command: ["sh", "-c", "chmod -Rv 600 /certs/* && chown 65532:65532 /certs/*"]
+          volumeMounts:
+            - name: certs-dir
+              mountPath: /certs
     additionalVolumeMounts:
+      - name: test-cert
+        mountPath: /certs/test.crt
+      - name: test-key
+        mountPath: /certs/test.key
+      - name: trust-pem
+        mountPath: /certs/trust.pem
       - name: traefik-dynamic-configs
         mountPath: /etc/traefik/dynamic
     globalArguments:
@@ -35,27 +67,27 @@ spec:
         expose: true
         exposedPort: 8443
         protocol: TCP
-      mongodb-tcp
+      mongodb-tcp:
         port: 27017
         expose: true
         exposedPort: 27017
         protocol: TCP
-      arango-http
+      arango-http:
         port: 8529
         expose: true
         exposedPort: 8529
         protocol: TCP
-      elastic-http
+      elastic-http:
         port: 9200
         expose: true
         exposedPort: 9200
         protocol: TCP
-      kibana-http
+      kibana-http:
         port: 5601
         expose: true
         exposedPort: 5601
         protocol: TCP
-      grafana-http
+      grafana-http:
         port: 3000
         expose: true
         exposedPort: 3000

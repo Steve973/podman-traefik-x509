@@ -2,23 +2,20 @@
 apiVersion: v1
 kind: Service
 metadata:
-  labels:
-    app: data-mongodb
   name: data-mongodb
 spec:
-  selector:
-    app: data-mongodb
-  type: NodePort
   ports:
     - name: mongodb-tcp
       port: 27017
-      targetPort: 27017
+      protocol: TCP
+  selector:
+    app: data-mongodb
 ---
 # Pod
 apiVersion: v1
 kind: Pod
 metadata:
-  name: mongodb
+  name: data-mongodb
 spec:
   containers:
     - name: data-mongodb
@@ -50,7 +47,7 @@ spec:
 ---
 # Ingress
 apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
+kind: IngressRouteTCP
 metadata:
   name: mongodb-ingress-route
   namespace: default
@@ -58,8 +55,9 @@ spec:
   entryPoints:
     - mongodb-tcp
   routes:
-    - match: HostSNI(`localhost`)
-      kind: Rule
+    - match: HostSNI(`*`)
       services:
         - name: data-mongodb
           port: 27017
+  tls:
+    passthrough: false

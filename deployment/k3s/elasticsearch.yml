@@ -2,13 +2,14 @@
 apiVersion: v1
 kind: Service
 metadata:
-  labels:
-    app: elasticsearch01
   name: elasticsearch01
 spec:
+  ports:
+    - name: elastic-http
+      port: 9200
+      protocol: TCP
   selector:
     app: elasticsearch01
-  type: NodePort
 ---
 # Pod
 apiVersion: v1
@@ -42,14 +43,14 @@ spec:
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: elasticsearch-ingress-route
+  name: elastic-ingress-route
   namespace: default
 spec:
   entryPoints:
-    - elasticsearch-http
+    - elastic-http
   routes:
-    - match: Host(`localhost`)
-      kind: Rule
+    - kind: Rule
+      match: Host(`*`)
       services:
         - name: elasticsearch01
           port: 9200

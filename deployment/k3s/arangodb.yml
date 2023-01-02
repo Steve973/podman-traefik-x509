@@ -2,22 +2,23 @@
 apiVersion: v1
 kind: Service
 metadata:
-  labels:
-    app: arangodb
-  name: arangodb
+  name: data-arangodb
 spec:
+  ports:
+    - name: arango-http
+      port: 8529
+      protocol: TCP
   selector:
-    app: arangodb
-  type: NodePort
+    app: data-arangodb
 ---
 # Pod
 apiVersion: v1
 kind: Pod
 metadata:
-  name: arangodb
+  name: data-arangodb
 spec:
   containers:
-    - name: data_arangodb
+    - name: data-arangodb
       image: docker.io/library/arangodb:3.10.2
       env:
         - name: ARANGO_ROOT_PASSWORD
@@ -48,10 +49,10 @@ metadata:
   namespace: default
 spec:
   entryPoints:
-    - arangodb-http
+    - arango-http
   routes:
-    - match: Host(`localhost`)
-      kind: Rule
+    - kind: Rule
+      match: Host(`*`)
       services:
-        - name: data_arangodb
+        - name: data-arangodb
           port: 8529
