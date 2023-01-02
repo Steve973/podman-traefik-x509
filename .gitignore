@@ -4,3 +4,4 @@ deployment/arangodb
 deployment/elasticsearch
 deployment/mongodb
 target
+*.iml

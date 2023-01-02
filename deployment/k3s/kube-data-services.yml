@@ -1,0 +1,247 @@
+# Services
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: mongodb
+  name: mongodb
+spec:
+  selector:
+    app: mongodb
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: arangodb
+  name: arangodb
+spec:
+  selector:
+    app: arangodb
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: elasticsearch01
+  name: elasticsearch01
+spec:
+  selector:
+    app: elasticsearch01
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: kibana
+  name: kibana
+spec:
+  selector:
+    app: kibana
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: grafana
+  name: grafana
+spec:
+  selector:
+    app: grafana
+  type: NodePort
+---
+# Pods
+apiVersion: v1
+kind: Pod
+metadata:
+  name: arangodb
+spec:
+  containers:
+    - name: data_arangodb
+      image: docker.io/library/arangodb:3.10.2
+      env:
+        - name: ARANGO_ROOT_PASSWORD
+          value: test123
+      securityContext:
+        runAsGroup: 1000
+        runAsUser: 1000
+      volumeMounts:
+        - mountPath: /var/lib/arangodb3-apps
+          name: arangodb-apps-dir
+        - mountPath: /var/lib/arangodb3
+          name: arangodb-data-dir
+  volumes:
+    - name: arangodb-apps-dir
+      hostPath:
+        path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/arangodb/apps
+        type: Directory
+    - name: arangodb-data-dir
+      hostPath:
+        path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/arangodb/data
+        type: Directory
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: arangodb-ingress-route
+  namespace: default
+spec:
+  entryPoints:
+    - arangodb-http
+  routes:
+    - match: Host(`localhost`)
+      kind: Rule
+      services:
+        - name: data_arangodb
+          port: 8529
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mongodb
+spec:
+  containers:
+    - name: data_mongodb
+      image: docker.io/library/mongo:6.0.3
+      args:
+        - --quiet
+        - --bind_ip_all
+        - --auth
+        - --enableFreeMonitoring
+        - "off"
+        - --journal
+      securityContext:
+        runAsGroup: 1000
+        runAsUser: 1000
+      volumeMounts:
+        - mountPath: /data/db
+          name: mongodb-data-dir
+        - mountPath: /data/configdb
+          name: mongodb-configdb-dir
+  volumes:
+    - name: mongodb-data-dir
+      hostPath:
+        path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/mongodb/db
+        type: Directory
+    - name: mongodb-configdb-dir
+      hostPath:
+        path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/mongodb/configdb
+        type: Directory
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: mongodb-ingress-route
+  namespace: default
+spec:
+  entryPoints:
+    - mongodb-tcp
+  routes:
+    - match: HostSNI(`localhost`)
+      kind: Rule
+      services:
+        - name: data_mongodb
+          port: 27017
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: elasticsearch01
+spec:
+  containers:
+    - name: es01
+      image: docker.io/library/elasticsearch:8.5.3
+      env:
+        - name: discovery.type
+          value: single-node
+        - name: ELASTIC_PASSWORD
+          value: test123
+        - name: xpack.security.enabled
+          value: "true"
+      securityContext:
+        runAsGroup: 1000
+        runAsUser: 1000
+      volumeMounts:
+        - mountPath: /usr/share/elasticsearch/data
+          name: elasticsearch-data-dir
+  volumes:
+    - name: elasticsearch-data-dir
+      hostPath:
+        path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/elasticsearch/data
+        type: Directory
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: elasticsearch-ingress-route
+  namespace: default
+spec:
+  entryPoints:
+    - elasticsearch-http
+  routes:
+    - match: Host(`localhost`)
+      kind: Rule
+      services:
+        - name: elasticsearch01
+          port: 9200
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kibana
+spec:
+  containers:
+    - name: kibana1
+      image: docker.io/library/kibana:8.5.3
+      env:
+        - name: SERVERNAME
+          value: kibana
+        - name: ELASTICSEARCH_HOSTS
+          value: http://elasticsearch01:9200
+        - name: ELASTICSEARCH_USERNAME
+          value: kibana_system
+        - name: ELASTICSEARCH_PASSWORD
+          value: test123
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: kibana-ingress-route
+  namespace: default
+spec:
+  entryPoints:
+    - kibana-http
+  routes:
+    - match: Host(`localhost`)
+      kind: Rule
+      services:
+        - name: kibana1
+          port: 5601
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: grafana
+spec:
+  containers:
+    - name: grafana1
+      image: docker.io/grafana/grafana:9.3.2
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: grafana-ingress-route
+  namespace: default
+spec:
+  entryPoints:
+    - grafana-http
+  routes:
+    - match: Host(`localhost`)
+      kind: Rule
+      services:
+        - name: grafana1
+          port: 3000

@@ -1,0 +1,46 @@
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: kibana
+  name: kibana
+spec:
+  selector:
+    app: kibana
+  type: NodePort
+---
+# Pod
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kibana
+spec:
+  containers:
+    - name: kibana1
+      image: docker.io/library/kibana:8.5.3
+      env:
+        - name: SERVERNAME
+          value: kibana
+        - name: ELASTICSEARCH_HOSTS
+          value: http://elasticsearch01:9200
+        - name: ELASTICSEARCH_USERNAME
+          value: kibana_system
+        - name: ELASTICSEARCH_PASSWORD
+          value: test123
+---
+# Ingress
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: kibana-ingress-route
+  namespace: default
+spec:
+  entryPoints:
+    - kibana-http
+  routes:
+    - match: Host(`localhost`)
+      kind: Rule
+      services:
+        - name: kibana1
+          port: 5601

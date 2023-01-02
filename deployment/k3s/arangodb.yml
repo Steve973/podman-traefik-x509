@@ -1,0 +1,57 @@
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: arangodb
+  name: arangodb
+spec:
+  selector:
+    app: arangodb
+  type: NodePort
+---
+# Pod
+apiVersion: v1
+kind: Pod
+metadata:
+  name: arangodb
+spec:
+  containers:
+    - name: data_arangodb
+      image: docker.io/library/arangodb:3.10.2
+      env:
+        - name: ARANGO_ROOT_PASSWORD
+          value: test123
+      securityContext:
+        runAsGroup: 1000
+        runAsUser: 1000
+      volumeMounts:
+        - mountPath: /var/lib/arangodb3-apps
+          name: arangodb-apps-dir
+        - mountPath: /var/lib/arangodb3
+          name: arangodb-data-dir
+  volumes:
+    - name: arangodb-apps-dir
+      hostPath:
+        path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/arangodb/apps
+        type: Directory
+    - name: arangodb-data-dir
+      hostPath:
+        path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/arangodb/data
+        type: Directory
+---
+# Ingress
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: arangodb-ingress-route
+  namespace: default
+spec:
+  entryPoints:
+    - arangodb-http
+  routes:
+    - match: Host(`localhost`)
+      kind: Rule
+      services:
+        - name: data_arangodb
+          port: 8529

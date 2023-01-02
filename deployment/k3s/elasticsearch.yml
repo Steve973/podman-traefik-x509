@@ -1,0 +1,55 @@
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: elasticsearch01
+  name: elasticsearch01
+spec:
+  selector:
+    app: elasticsearch01
+  type: NodePort
+---
+# Pod
+apiVersion: v1
+kind: Pod
+metadata:
+  name: elasticsearch01
+spec:
+  containers:
+    - name: es01
+      image: docker.io/library/elasticsearch:8.5.3
+      env:
+        - name: discovery.type
+          value: single-node
+        - name: ELASTIC_PASSWORD
+          value: test123
+        - name: xpack.security.enabled
+          value: "true"
+      securityContext:
+        runAsGroup: 1000
+        runAsUser: 1000
+      volumeMounts:
+        - mountPath: /usr/share/elasticsearch/data
+          name: elasticsearch-data-dir
+  volumes:
+    - name: elasticsearch-data-dir
+      hostPath:
+        path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/elasticsearch/data
+        type: Directory
+---
+# Ingress
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: elasticsearch-ingress-route
+  namespace: default
+spec:
+  entryPoints:
+    - elasticsearch-http
+  routes:
+    - match: Host(`localhost`)
+      kind: Rule
+      services:
+        - name: elasticsearch01
+          port: 9200
