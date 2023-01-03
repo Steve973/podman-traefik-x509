@@ -52,7 +52,7 @@ spec:
     - arango-http
   routes:
     - kind: Rule
-      match: Host(`*`)
+      match: HostRegexp(`.+`)
       services:
         - name: data-arangodb
           port: 8529
