@@ -11,35 +11,43 @@ spec:
   selector:
     app: data-arangodb
 ---
-# Pod
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: data-arangodb
 spec:
-  containers:
-    - name: data-arangodb
-      image: docker.io/library/arangodb:3.10.2
-      env:
-        - name: ARANGO_ROOT_PASSWORD
-          value: test123
-      securityContext:
-        runAsGroup: 1000
-        runAsUser: 1000
-      volumeMounts:
-        - mountPath: /var/lib/arangodb3-apps
-          name: arangodb-apps-dir
-        - mountPath: /var/lib/arangodb3
-          name: arangodb-data-dir
-  volumes:
-    - name: arangodb-apps-dir
-      hostPath:
-        path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/arangodb/apps
-        type: Directory
-    - name: arangodb-data-dir
-      hostPath:
-        path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/arangodb/data
-        type: Directory
+  replicas: 1
+  selector:
+    matchLabels:
+      app: data-arangodb
+  template:
+    metadata:
+      labels:
+        app: data-arangodb
+    spec:
+      containers:
+        - name: data-arangodb
+          image: docker.io/library/arangodb:3.10.2
+          env:
+            - name: ARANGO_ROOT_PASSWORD
+              value: test123
+          securityContext:
+            runAsGroup: 1000
+            runAsUser: 1000
+          volumeMounts:
+            - mountPath: /var/lib/arangodb3-apps
+              name: arangodb-apps-dir
+            - mountPath: /var/lib/arangodb3
+              name: arangodb-data-dir
+      volumes:
+        - name: arangodb-apps-dir
+          hostPath:
+            path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/arangodb/apps
+            type: Directory
+        - name: arangodb-data-dir
+          hostPath:
+            path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/arangodb/data
+            type: Directory
 ---
 # Ingress
 apiVersion: traefik.containo.us/v1alpha1
@@ -52,7 +60,9 @@ spec:
     - arango-http
   routes:
     - kind: Rule
-      match: HostRegexp(`.+`)
+      match: HostRegexp(`{name:.+}`)
       services:
         - name: data-arangodb
           port: 8529
+  tls:
+    certResolver: default

@@ -11,15 +11,24 @@ spec:
   selector:
     app: grafana
 ---
-# Pod
-apiVersion: v1
-kind: Pod
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: grafana
 spec:
-  containers:
-    - name: grafana1
-      image: docker.io/grafana/grafana:9.3.2
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana1
+          image: docker.io/grafana/grafana:9.3.2
 ---
 # Ingress
 apiVersion: traefik.containo.us/v1alpha1
@@ -32,7 +41,9 @@ spec:
     - grafana-http
   routes:
     - kind: Rule
-      match: HostRegexp(`.+`)
+      match: HostRegexp(`{name:.+}`)
       services:
         - name: grafana
           port: 3000
+  tls:
+    certResolver: default

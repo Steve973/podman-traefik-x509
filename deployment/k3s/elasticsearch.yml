@@ -11,33 +11,42 @@ spec:
   selector:
     app: elasticsearch01
 ---
-# Pod
-apiVersion: v1
-kind: Pod
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: elasticsearch01
 spec:
-  containers:
-    - name: es01
-      image: docker.io/library/elasticsearch:8.5.3
-      env:
-        - name: discovery.type
-          value: single-node
-        - name: ELASTIC_PASSWORD
-          value: test123
-        - name: xpack.security.enabled
-          value: "true"
-      securityContext:
-        runAsGroup: 1000
-        runAsUser: 1000
-      volumeMounts:
-        - mountPath: /usr/share/elasticsearch/data
-          name: elasticsearch-data-dir
-  volumes:
-    - name: elasticsearch-data-dir
-      hostPath:
-        path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/elasticsearch/data
-        type: Directory
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elasticsearch01
+  template:
+    metadata:
+      labels:
+        app: elasticsearch01
+    spec:
+      containers:
+        - name: es01
+          image: docker.io/library/elasticsearch:8.5.3
+          env:
+            - name: discovery.type
+              value: single-node
+            - name: ELASTIC_PASSWORD
+              value: test123
+            - name: xpack.security.enabled
+              value: "true"
+          securityContext:
+            runAsGroup: 1000
+            runAsUser: 1000
+          volumeMounts:
+            - mountPath: /usr/share/elasticsearch/data
+              name: elasticsearch-data-dir
+      volumes:
+        - name: elasticsearch-data-dir
+          hostPath:
+            path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/elasticsearch/data
+            type: Directory
 ---
 # Ingress
 apiVersion: traefik.containo.us/v1alpha1
@@ -50,7 +59,9 @@ spec:
     - elastic-http
   routes:
     - kind: Rule
-      match: HostRegexp(`.+`)
+      match: HostRegexp(`{name:.+}`)
       services:
         - name: elasticsearch01
           port: 9200
+  tls:
+    certResolver: default

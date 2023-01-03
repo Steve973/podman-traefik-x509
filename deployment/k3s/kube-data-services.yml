@@ -1,5 +1,5 @@
 #########################################################
-## ArangoDB Service, Pod, and Ingress
+## ArangoDB Service, Deployment, and Ingress
 #########################################################
 # Service
 apiVersion: v1
@@ -14,35 +14,43 @@ spec:
   selector:
     app: data-arangodb
 ---
-# Pod
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: data-arangodb
 spec:
-  containers:
-    - name: data-arangodb
-      image: docker.io/library/arangodb:3.10.2
-      env:
-        - name: ARANGO_ROOT_PASSWORD
-          value: test123
-      securityContext:
-        runAsGroup: 1000
-        runAsUser: 1000
-      volumeMounts:
-        - mountPath: /var/lib/arangodb3-apps
-          name: arangodb-apps-dir
-        - mountPath: /var/lib/arangodb3
-          name: arangodb-data-dir
-  volumes:
-    - name: arangodb-apps-dir
-      hostPath:
-        path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/arangodb/apps
-        type: Directory
-    - name: arangodb-data-dir
-      hostPath:
-        path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/arangodb/data
-        type: Directory
+  replicas: 1
+  selector:
+    matchLabels:
+      app: data-arangodb
+  template:
+    metadata:
+      labels:
+        app: data-arangodb
+    spec:
+      containers:
+        - name: data-arangodb
+          image: docker.io/library/arangodb:3.10.2
+          env:
+            - name: ARANGO_ROOT_PASSWORD
+              value: test123
+          securityContext:
+            runAsGroup: 1000
+            runAsUser: 1000
+          volumeMounts:
+            - mountPath: /var/lib/arangodb3-apps
+              name: arangodb-apps-dir
+            - mountPath: /var/lib/arangodb3
+              name: arangodb-data-dir
+      volumes:
+        - name: arangodb-apps-dir
+          hostPath:
+            path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/arangodb/apps
+            type: Directory
+        - name: arangodb-data-dir
+          hostPath:
+            path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/arangodb/data
+            type: Directory
 ---
 # Ingress
 apiVersion: traefik.containo.us/v1alpha1
@@ -55,82 +63,16 @@ spec:
     - arango-http
   routes:
     - kind: Rule
-      match: HostRegexp(`.+`)
+      match: HostRegexp(`{name:.+}`)
       services:
         - name: data-arangodb
           port: 8529
-
----
-#########################################################
-## MongoDB Service, Pod, and Ingress
-#########################################################
-# Service
-apiVersion: v1
-kind: Service
-metadata:
-  name: data-mongodb
-spec:
-  ports:
-    - name: mongodb-tcp
-      port: 27017
-      protocol: TCP
-  selector:
-    app: data-mongodb
----
-# Pod
-apiVersion: v1
-kind: Pod
-metadata:
-  name: data-mongodb
-spec:
-  containers:
-    - name: data-mongodb
-      image: docker.io/library/mongo:6.0.3
-      args:
-        - --quiet
-        - --bind_ip_all
-        - --auth
-        - --enableFreeMonitoring
-        - "off"
-        - --journal
-      securityContext:
-        runAsGroup: 1000
-        runAsUser: 1000
-      volumeMounts:
-        - mountPath: /data/db
-          name: mongodb-data-dir
-        - mountPath: /data/configdb
-          name: mongodb-configdb-dir
-  volumes:
-    - name: mongodb-data-dir
-      hostPath:
-        path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/mongodb/db
-        type: Directory
-    - name: mongodb-configdb-dir
-      hostPath:
-        path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/mongodb/configdb
-        type: Directory
----
-# Ingress
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRouteTCP
-metadata:
-  name: mongodb-ingress-route
-  namespace: default
-spec:
-  entryPoints:
-    - mongodb-tcp
-  routes:
-    - match: HostSNI(`*`)
-      services:
-        - name: data-mongodb
-          port: 27017
   tls:
-    passthrough: false
-
+    certResolver: default
 ---
+
 #########################################################
-## Elasticsearch Service, Pod, and Ingress
+## Elasticsearch Service, Deployment, and Ingress
 #########################################################
 # Service
 apiVersion: v1
@@ -145,33 +87,42 @@ spec:
   selector:
     app: elasticsearch01
 ---
-# Pod
-apiVersion: v1
-kind: Pod
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: elasticsearch01
 spec:
-  containers:
-    - name: es01
-      image: docker.io/library/elasticsearch:8.5.3
-      env:
-        - name: discovery.type
-          value: single-node
-        - name: ELASTIC_PASSWORD
-          value: test123
-        - name: xpack.security.enabled
-          value: "true"
-      securityContext:
-        runAsGroup: 1000
-        runAsUser: 1000
-      volumeMounts:
-        - mountPath: /usr/share/elasticsearch/data
-          name: elasticsearch-data-dir
-  volumes:
-    - name: elasticsearch-data-dir
-      hostPath:
-        path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/elasticsearch/data
-        type: Directory
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elasticsearch01
+  template:
+    metadata:
+      labels:
+        app: elasticsearch01
+    spec:
+      containers:
+        - name: es01
+          image: docker.io/library/elasticsearch:8.5.3
+          env:
+            - name: discovery.type
+              value: single-node
+            - name: ELASTIC_PASSWORD
+              value: test123
+            - name: xpack.security.enabled
+              value: "true"
+          securityContext:
+            runAsGroup: 1000
+            runAsUser: 1000
+          volumeMounts:
+            - mountPath: /usr/share/elasticsearch/data
+              name: elasticsearch-data-dir
+      volumes:
+        - name: elasticsearch-data-dir
+          hostPath:
+            path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/elasticsearch/data
+            type: Directory
 ---
 # Ingress
 apiVersion: traefik.containo.us/v1alpha1
@@ -184,66 +135,16 @@ spec:
     - elastic-http
   routes:
     - kind: Rule
-      match: HostRegexp(`.+`)
+      match: HostRegexp(`{name:.+}`)
       services:
         - name: elasticsearch01
           port: 9200
+  tls:
+    certResolver: default
+---
 
----
 #########################################################
-## Kibana Service, Pod, and Ingress
-#########################################################
-# Service
-apiVersion: v1
-kind: Service
-metadata:
-  name: kibana
-spec:
-  ports:
-    - name: kibana-http
-      port: 5601
-      protocol: TCP
-  selector:
-    app: kibana
----
-# Pod
-apiVersion: v1
-kind: Pod
-metadata:
-  name: kibana
-spec:
-  containers:
-    - name: kibana1
-      image: docker.io/library/kibana:8.5.3
-      env:
-        - name: SERVERNAME
-          value: kibana
-        - name: ELASTICSEARCH_HOSTS
-          value: http://elasticsearch01:9200
-        - name: ELASTICSEARCH_USERNAME
-          value: kibana_system
-        - name: ELASTICSEARCH_PASSWORD
-          value: test123
----
-# Ingress
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
-metadata:
-  name: kibana-ingress-route
-  namespace: default
-spec:
-  entryPoints:
-    - kibana-http
-  routes:
-    - kind: Rule
-      match: HostRegexp(`.+`)
-      services:
-        - name: kibana
-          port: 5601
-
----
-#########################################################
-## Grafana Service, Pod, and Ingress
+## Grafana Service, Deployment, and Ingress
 #########################################################
 # Service
 apiVersion: v1
@@ -258,15 +159,24 @@ spec:
   selector:
     app: grafana
 ---
-# Pod
-apiVersion: v1
-kind: Pod
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: grafana
 spec:
-  containers:
-    - name: grafana1
-      image: docker.io/grafana/grafana:9.3.2
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana1
+          image: docker.io/grafana/grafana:9.3.2
 ---
 # Ingress
 apiVersion: traefik.containo.us/v1alpha1
@@ -279,7 +189,167 @@ spec:
     - grafana-http
   routes:
     - kind: Rule
-      match: HostRegexp(`.+`)
+      match: HostRegexp(`{name:.+}`)
       services:
         - name: grafana
           port: 3000
+  tls:
+    certResolver: default
+---
+
+#########################################################
+## Kibana Service, Deployment, and Ingress
+#########################################################
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: kibana
+spec:
+  ports:
+    - name: kibana-http
+      port: 5601
+      protocol: TCP
+  selector:
+    app: kibana
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana
+  template:
+    metadata:
+      labels:
+        app: kibana
+    spec:
+      containers:
+        - name: kibana1
+          image: docker.io/library/kibana:8.5.3
+          env:
+            - name: SERVERNAME
+              value: kibana
+            - name: ELASTICSEARCH_HOSTS
+              value: http://elasticsearch01:9200
+            - name: ELASTICSEARCH_USERNAME
+              value: kibana_system
+            - name: ELASTICSEARCH_PASSWORD
+              value: test123
+---
+# Ingress
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: kibana-ingress-route
+  namespace: default
+spec:
+  entryPoints:
+    - kibana-http
+  routes:
+    - kind: Rule
+      match: HostRegexp(`{name:.+}`)
+      services:
+        - name: kibana
+          port: 5601
+  tls:
+    certResolver: default
+---
+
+#########################################################
+## MongoDB Service, Deployment, and Ingress
+#########################################################
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: data-mongodb
+spec:
+  ports:
+    - name: mongodb-tcp
+      port: 27017
+      protocol: TCP
+  selector:
+    app: data-mongodb
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: data-mongodb
+  template:
+    metadata:
+      labels:
+        app: data-mongodb
+    spec:
+      containers:
+        - name: data-mongodb
+          image: docker.io/library/mongo:6.0.3
+          args:
+            - --quiet
+            - --bind_ip_all
+            - --auth
+            - --enableFreeMonitoring
+            - "off"
+            - --journal
+          securityContext:
+            runAsGroup: 1000
+            runAsUser: 1000
+          volumeMounts:
+            - mountPath: /data/db
+              name: mongodb-data-dir
+            - mountPath: /data/configdb
+              name: mongodb-configdb-dir
+      volumes:
+        - name: mongodb-data-dir
+          hostPath:
+            path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/mongodb/db
+            type: Directory
+        - name: mongodb-configdb-dir
+          hostPath:
+            path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/mongodb/configdb
+            type: Directory
+---
+# Ingress
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: mongodb-ingress-route
+  namespace: default
+spec:
+  entryPoints:
+    - mongodb-tcp
+  routes:
+    - match: HostSNIRegexp(`{name:.+}`)
+      services:
+        - name: data-mongodb
+          port: 27017
+  tls:
+    passthrough: false
+---
+
+#########################################################
+## Traefik Dashboard Ingress
+#########################################################
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: dashboard
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: HostRegexp(`traefik.{name:.+}`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
+      kind: Rule
+      services:
+        - name: api@internal
+          kind: TraefikService

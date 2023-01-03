@@ -11,39 +11,48 @@ spec:
   selector:
     app: data-mongodb
 ---
-# Pod
-apiVersion: v1
-kind: Pod
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: data-mongodb
 spec:
-  containers:
-    - name: data-mongodb
-      image: docker.io/library/mongo:6.0.3
-      args:
-        - --quiet
-        - --bind_ip_all
-        - --auth
-        - --enableFreeMonitoring
-        - "off"
-        - --journal
-      securityContext:
-        runAsGroup: 1000
-        runAsUser: 1000
-      volumeMounts:
-        - mountPath: /data/db
-          name: mongodb-data-dir
-        - mountPath: /data/configdb
-          name: mongodb-configdb-dir
-  volumes:
-    - name: mongodb-data-dir
-      hostPath:
-        path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/mongodb/db
-        type: Directory
-    - name: mongodb-configdb-dir
-      hostPath:
-        path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/mongodb/configdb
-        type: Directory
+  replicas: 1
+  selector:
+    matchLabels:
+      app: data-mongodb
+  template:
+    metadata:
+      labels:
+        app: data-mongodb
+    spec:
+      containers:
+        - name: data-mongodb
+          image: docker.io/library/mongo:6.0.3
+          args:
+            - --quiet
+            - --bind_ip_all
+            - --auth
+            - --enableFreeMonitoring
+            - "off"
+            - --journal
+          securityContext:
+            runAsGroup: 1000
+            runAsUser: 1000
+          volumeMounts:
+            - mountPath: /data/db
+              name: mongodb-data-dir
+            - mountPath: /data/configdb
+              name: mongodb-configdb-dir
+      volumes:
+        - name: mongodb-data-dir
+          hostPath:
+            path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/mongodb/db
+            type: Directory
+        - name: mongodb-configdb-dir
+          hostPath:
+            path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/mongodb/configdb
+            type: Directory
 ---
 # Ingress
 apiVersion: traefik.containo.us/v1alpha1
@@ -55,7 +64,7 @@ spec:
   entryPoints:
     - mongodb-tcp
   routes:
-    - match: HostSNI(`*`)
+    - match: HostSNIRegexp(`{name:.+}`)
       services:
         - name: data-mongodb
           port: 27017

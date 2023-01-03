@@ -11,24 +11,33 @@ spec:
   selector:
     app: kibana
 ---
-# Pod
-apiVersion: v1
-kind: Pod
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: kibana
 spec:
-  containers:
-    - name: kibana1
-      image: docker.io/library/kibana:8.5.3
-      env:
-        - name: SERVERNAME
-          value: kibana
-        - name: ELASTICSEARCH_HOSTS
-          value: http://elasticsearch01:9200
-        - name: ELASTICSEARCH_USERNAME
-          value: kibana_system
-        - name: ELASTICSEARCH_PASSWORD
-          value: test123
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana
+  template:
+    metadata:
+      labels:
+        app: kibana
+    spec:
+      containers:
+        - name: kibana1
+          image: docker.io/library/kibana:8.5.3
+          env:
+            - name: SERVERNAME
+              value: kibana
+            - name: ELASTICSEARCH_HOSTS
+              value: http://elasticsearch01:9200
+            - name: ELASTICSEARCH_USERNAME
+              value: kibana_system
+            - name: ELASTICSEARCH_PASSWORD
+              value: test123
 ---
 # Ingress
 apiVersion: traefik.containo.us/v1alpha1
@@ -41,7 +50,9 @@ spec:
     - kibana-http
   routes:
     - kind: Rule
-      match: HostRegexp(`.+`)
+      match: HostRegexp(`{name:.+}`)
       services:
         - name: kibana
           port: 5601
+  tls:
+    certResolver: default
