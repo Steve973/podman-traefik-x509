@@ -41,7 +41,7 @@ spec:
     - kibana-http
   routes:
     - kind: Rule
-      match: Host(`*`)
+      match: HostRegexp(`.+`)
       services:
         - name: kibana
           port: 5601
