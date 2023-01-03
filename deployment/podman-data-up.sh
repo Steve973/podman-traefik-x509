@@ -4,11 +4,18 @@ if [ ! -d ./certs ]; then
   sh ./generate-certs.sh
 fi
 
+mkdir -p arangodb/apps
+mkdir -p arangodb/data
+mkdir -p mongodb/configdb
+mkdir -p mongodb/db
+
 podman secret create --driver=file test-crt ./certs/test.crt
 podman secret create --driver=file test-key ./certs/test.key
 podman secret create --driver=file trust-pem ./certs/myCA.pem
 
 podman network create data_network
+
+systemctl --user start podman.service
 
 ##### source ./.env
 MONGO_PORT=27017
@@ -153,7 +160,8 @@ podman run -d \
  --label "stackId=data" \
  --label "traefik.enable=true" \
  --label "traefik.http.routers.dashboard.entrypoints=websecure" \
- --label "traefik.http.routers.dashboard.rule=Host(\`data.localhost\`) && (PathPrefix(\`/api\`) || PathPrefix(\`/dashboard\`))" \
+ --label "traefik.http.routers.dashboard.rule=HostRegexp(\`data.{name:.+}\`) && (PathPrefix(\`/api\`) || PathPrefix(\`/dashboard\`))" \
+ --label "traefik.http.routers.dashboard.tls=true" \
  --label "traefik.http.routers.dashboard.tls.options=default" \
  --label "traefik.http.routers.dashboard.service=api@internal" \
  --label "traefik.http.routers.dashboard.middlewares=dashboard-auth" \
