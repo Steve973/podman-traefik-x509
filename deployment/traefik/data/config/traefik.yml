@@ -12,3 +12,8 @@ tls:
         caFiles:
           - /certs/trust.pem
         clientAuthType: RequireAndVerifyClientCert
+http:
+  middlewares:
+    dashboard-auth:
+      basicauth:
+        usersfile: /etc/credentials.txt

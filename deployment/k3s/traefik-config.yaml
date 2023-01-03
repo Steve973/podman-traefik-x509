@@ -16,6 +16,10 @@ spec:
           hostPath:
             path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/traefik/data/config
             type: Directory
+        - name: dashboard-credentials-file
+          hostPath:
+            path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/traefik/data/credentials.txt
+            type: File
         - name: certs-dir
           hostPath:
             path: /home/steve/IdeaProjects/podman-caddy-x509/deployment/certs
@@ -48,6 +52,8 @@ spec:
         mountPath: /certs/trust.pem
       - name: traefik-dynamic-configs
         mountPath: /etc/traefik/dynamic
+      - name: dashboard-credentials-file
+        mountPath: /etc/credentials.txt
     globalArguments:
       - "--global.checknewversion=false"
       - "--global.sendanonymoususage=false"
