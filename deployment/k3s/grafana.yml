@@ -32,7 +32,7 @@ spec:
     - grafana-http
   routes:
     - kind: Rule
-      match: Host(`*`)
+      match: HostRegexp(`.+`)
       services:
         - name: grafana
           port: 3000
