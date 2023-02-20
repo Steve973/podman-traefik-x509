@@ -1,14 +1,14 @@
 #!/bin/bash
 
+WORK_DIR=$1
 HOST=$(hostname)
 
-if [ ! -d ./certs ]; then
-  # create certs dir and (temporarily) switch to it
-  mkdir ./certs
-  pushd ./certs
-
+if [ ! -d "${WORK_DIR}"/certs ]; then
+  # create certs dir
+  mkdir "${WORK_DIR}"/certs
   # create the CA extension file
-  envsubst <../testCA-ext-template.txt >test.ext
+  envsubst <./testCA-ext-template.txt >"${WORK_DIR}"/certs/test.ext
+  pushd "${WORK_DIR}"/certs
 
   # generate the local CA key
   openssl genrsa -out ./myCA.key 2048
@@ -23,7 +23,7 @@ if [ ! -d ./certs ]; then
   openssl x509 -req -in ./test.csr -CA ./myCA.pem -CAkey ./myCA.key -CAcreateserial -out ./test.crt -days 999 -sha384 -extfile ./test.ext
 
   # create a p12 keystore
-  openssl pkcs12 -export -out test.p12 -name "$(hostname)" -inkey test.key -in test.crt -passout pass:test -passin pass:
+  openssl pkcs12 -export -out ./test.p12 -name "$(hostname)" -inkey ./test.key -in ./test.crt -passout pass:test -passin pass:
 
   # create a jks truststore
   keytool -import -trustcacerts -noprompt -alias "$(hostname)" -ext san=dns:localhost,ip:127.0.0.1 -file ./myCA.pem -keystore ./truststore.jks -storepass changeit
