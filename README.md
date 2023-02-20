@@ -17,7 +17,11 @@ curl \
  "https://localhost:8443/greeting-service/greeting?name=World"
 ```
 
+If you want to access the services dashboard or the data dashboard, you need to import the generated PKCS12 certificate:
+`/tmp/certs/test.p12` into your browser.
+
 The Traefik services stack dashboard is available at `https://services.localhost:8443`
+
 The Traefik data stack dashboard is available at `https://data.localhost:8444`
 
 You can bring all pods down, remove the network, and remove the secrets by running:
