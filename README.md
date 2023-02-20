@@ -24,11 +24,13 @@ The Traefik services stack dashboard is available at `https://services.localhost
 
 The Traefik data stack dashboard is available at `https://data.localhost:8444`
 
-You can bring all pods down, remove the network, and remove the secrets by running:
+You can bring all pods down, remove all containers, and remove the network:
 ```
 sh ./podman-stack.sh --stop all
 ```
-If you want the certs to be re-generated, then remove the certs directory prior to running
+If you want the certs to be re-generated, then remove the certs directory prior to bringing up either stack:
 ```
 sh ./podman-stack.sh --clean
 ```
+Note that this will remove the data directories for the data apps, and they will be reinitialized after the certs are
+generated.
