@@ -464,9 +464,9 @@ stop_all() {
 }
 
 clean_resources() {
-  pushd ${WORK_DIR}
+  pushd ${WORK_DIR} || return
   rm -rf certs/ mongodb/ arangodb/ elasticsearch/
-  popd
+  popd || exit
 }
 
 TEMP=$(getopt -o cs:t: --long clean,start:,stop: -- "$@")
