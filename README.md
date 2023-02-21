@@ -8,12 +8,9 @@ sh ./podman-stack.sh --start all
 Now you can access `https://localhost:8443/greeting-service/greeting?name=YourName` by using curl:
 ```
 curl \
- --tlsv1.2 \
- --tls-max 1.2 \
  --key /tmp/certs/test.key \
  --cert /tmp/certs/test.crt \
  --insecure \
- -vvv \
  "https://localhost:8443/greeting-service/greeting?name=World"
 ```
 
@@ -33,4 +30,4 @@ If you want the certs to be re-generated, then remove the certs directory prior 
 sh ./podman-stack.sh --clean
 ```
 Note that this will remove the data directories for the data apps, and they will be reinitialized after the certs are
-generated.
+generated when you start the stack.
